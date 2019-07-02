@@ -1,9 +1,9 @@
 baseURL = "https://observability.thomasriley.co.uk/"
 languageCode = "en-gb"
-title = "Kubernetes Observability"
+title = "Observability for Kubernetes"
 theme = "hugo-theme-learn"
 [params]
-  editURL = "https://github.com/thomasriley/observability.thomasriley.co.uk/edit/master/content/"
+  editURL = "https://github.com/thomasriley/observability-for-kubernetes/edit/master/content/"
   author = "Thomas Riley"
   description = "Learn Monitoring & Observability for Kubernetes"
   # Shows a checkmark for visited pages on the menu
@@ -26,7 +26,7 @@ theme = "hugo-theme-learn"
   # Order sections in menu by "weight" or "title". Default to "weight"
   ordersectionsby = "weight"
   # Change default color scheme with a variant one. Can be "red", "blue", "green".
-  themeVariant = "green"
+  themeVariant = "blue"
 
 [outputs]
 home = [ "HTML", "RSS", "JSON"]
