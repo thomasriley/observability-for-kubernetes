@@ -2,6 +2,7 @@ baseURL = "https://observability.thomasriley.co.uk/"
 languageCode = "en-gb"
 title = "Observability for Kubernetes"
 theme = "hugo-theme-learn"
+
 [params]
   editURL = "https://github.com/thomasriley/observability-for-kubernetes/edit/master/content/"
   author = "Thomas Riley"
@@ -18,7 +19,7 @@ theme = "hugo-theme-learn"
   # A title for shortcuts in menu is set by default. Set this to true to disable it. 
   disableShortcutsTitle = false
   # When using mulitlingual website, disable the switch language button.
-  disableLanguageSwitchingButton = false
+  disableLanguageSwitchingButton = true
   # Hide breadcrumbs in the header and only show the current page title
   disableBreadcrumb = false
   # Hide Next and Previous page buttons normally displayed full height beside content
