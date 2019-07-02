@@ -1,6 +1,7 @@
 ---
 title: "Deploying Prometheus Operator"
 date: 2019-07-02T12:08:47+01:00
+weight: 20
 draft: false
 ---
 
@@ -16,9 +17,9 @@ In this workshop we are going to use the Community Helm Chart to deploy the Prom
 
 ## Deploying Prometheus Operator with Helm
 
-First we will use the community maintained [Helm chart](https://github.com/helm/charts/tree/master/stable/prometheus-operator) for deploying Prometheus Operator to Kubernetes. Out of the box, the Helm chart will also configure the operator install an instance of Prometheus however to beging with lets deploy a standalone instance of the Operator.
+First we will use the community maintained [Helm chart](https://github.com/helm/charts/tree/master/stable/prometheus-operator) for deploying Prometheus Operator to Kubernetes. Out of the box, the Helm chart will also configure the operator install an instance of Prometheus however to begin with lets deploy a standalone instance of the Operator.
 
-Create a file called `values.yaml` containing the following:
+Create a file called **values.yaml** containing the following:
 
 ```yaml
 defaultRules:
@@ -47,7 +48,7 @@ prometheus:
   enabled: false
 ```
 
-Then install the Prometheus Operator via Helm using the `helm upgrade` command as shown below:
+Then install the Prometheus Operator via Helm using the **helm upgrade** command as shown below:
 
 ```shell
 helm upgrade --install prometheus-operator stable/prometheus-operator --namespace prometheus --values values.yaml
@@ -109,9 +110,9 @@ to create & configure Alertmanager and Prometheus instances using the Operator.
 
 ```
 
-Above you can see that Helm has deployed the `stable/prometheus-operator` Helm chart under the release name `prometheus-operator` into the Kubernetes namespace `prometheus` using the Helm values we created above in values.yaml.
+Above you can see that Helm has deployed the **stable/prometheus-operator** Helm chart under the release name **prometheus-operator** into the Kubernetes namespace **prometheus** using the Helm values we created above in values.yaml.
 
-If you then use Kubectl to list the Pods in the `prometheus` namespace you will see the Prometheus Operator is now installed:
+If you then use Kubectl to list the Pods in the **prometheus** namespace you will see the Prometheus Operator is now installed:
 
 ```shell
 $ kubectl get pods -n prometheus

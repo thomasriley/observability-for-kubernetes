@@ -3,7 +3,7 @@ title = "Prometheus"
 date = 2019-07-02T11:59:25+01:00
 weight = 5
 chapter = true
-pre = "<b>X. </b>"
+pre = "<b>1. </b>"
 +++
 
 ### Chapter 1
