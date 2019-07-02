@@ -6,9 +6,9 @@ title: "Monitoring & Observability for Kubernetes"
 
 ### What is this site?
 
-* I wanted a place to store all my notes and learnings about Monitoring & Observability working with Kubernetes and containerisation
-* As create a private set of notes I created this site so I can give back to the community
-* If you spot a mistake or wish to propose a change, please raise a PR
+* I wanted a place to store all my notes and learnings about Monitoring & Observability working with Kubernetes and containerisation.
+* As create a private set of notes I created this site so I can give back to the community.
+* If you spot a mistake or wish to propose a change, please raise a PR.
 * I hope you find this useful!
 
 ### Who am I?

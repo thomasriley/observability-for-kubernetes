@@ -1,21 +1,9 @@
 ---
-title: "Deploying Prometheus Operator"
+title: "Deploying Prometheus Operator with Helm"
 date: 2019-07-02T12:08:47+01:00
-weight: 20
+weight: 10
 draft: false
 ---
-
-## Overview
-
-There are a number of ways you can deploy Prometheus to Kubernetes:
-
-* Prometheus Operator
-* kube-prometheus
-* Community Helm Chart
-
-In this workshop we are going to use the Community Helm Chart to deploy the Prometheus Operator to Kubernetes. With the Operator installed, we can then look at how to deploy and configure an instance of Prometheus. By the end of the workshop you will have an instance of Prometheus deployed that you can interact with.
-
-## Deploying Prometheus Operator with Helm
 
 First we will use the community maintained [Helm chart](https://github.com/helm/charts/tree/master/stable/prometheus-operator) for deploying Prometheus Operator to Kubernetes. Out of the box, the Helm chart will also configure the operator install an instance of Prometheus however to begin with lets deploy a standalone instance of the Operator.
 
