@@ -1,0 +1,32 @@
+baseURL = "https://observability.thomasriley.co.uk/"
+languageCode = "en-gb"
+title = "Kubernetes Observability"
+theme = "hugo-theme-learn"
+[params]
+  editURL = "https://github.com/thomasriley/observability.thomasriley.co.uk/edit/master/content/"
+  author = "Thomas Riley"
+  description = "Learn Monitoring & Observability for Kubernetes"
+  # Shows a checkmark for visited pages on the menu
+  showVisitedLinks = true
+  # Disable search function. It will hide search bar
+  disableSearch = false
+  # Javascript and CSS cache are automatically busted when new version of site is generated. 
+  # Set this to true to disable this behaviour (some proxies don't handle well this optimization)
+  disableAssetsBusting = false
+  # Set this to true to disable copy-to-clipboard button for inline code.
+  disableInlineCopyToClipBoard = false
+  # A title for shortcuts in menu is set by default. Set this to true to disable it. 
+  disableShortcutsTitle = false
+  # When using mulitlingual website, disable the switch language button.
+  disableLanguageSwitchingButton = false
+  # Hide breadcrumbs in the header and only show the current page title
+  disableBreadcrumb = true
+  # Hide Next and Previous page buttons normally displayed full height beside content
+  disableNextPrev = true
+  # Order sections in menu by "weight" or "title". Default to "weight"
+  ordersectionsby = "weight"
+  # Change default color scheme with a variant one. Can be "red", "blue", "green".
+  themeVariant = "green"
+
+[outputs]
+home = [ "HTML", "RSS", "JSON"]
