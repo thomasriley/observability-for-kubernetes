@@ -5,6 +5,8 @@ weight: 10
 draft: false
 ---
 
+![Prometheus](/prometheus/what-is-prometheus/images/logo.png?classes=shadow&width=40pc)
+
 Prometheus is an open-source metrics oriented monitoring and alerting tool. The project was first created by SoundCloud in 2012. In 2016 the project joined the Cloud Native Compute Foundation. In 2018, it's CNCF maturity status changed from incubation to graduated. Prometheus is only the second project to graduate after Kubernetes.
 
 Prometheus has quickly become the de facto open-source monitoring tool for Kubernetes and is widely used and supported in the Cloud Native industry.

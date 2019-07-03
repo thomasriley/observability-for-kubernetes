@@ -5,7 +5,7 @@ weight: 20
 draft: false
 ---
 
-### Launch Prometheus 
+### Launching Prometheus 
 
 Now that we have deployed Prometheus Operator we can use it to launch an instance of Prometheus.
 
