@@ -17,8 +17,6 @@ If you run the `kubectl get customresourcedefinitions` command in your terminal 
 $kubectl get customresourcedefinitions
 NAME                                           CREATED AT
 alertmanagers.monitoring.coreos.com            2019-07-02T13:13:21Z
-capacityrequests.internal.autoscaling.k8s.io   2019-06-23T20:46:56Z
-managedcertificates.networking.gke.io          2019-06-23T20:46:56Z
 prometheuses.monitoring.coreos.com             2019-07-02T13:13:21Z
 prometheusrules.monitoring.coreos.com          2019-07-02T13:13:21Z
 servicemonitors.monitoring.coreos.com          2019-07-02T13:13:21Z
