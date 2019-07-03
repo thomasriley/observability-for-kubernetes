@@ -1,12 +1,12 @@
 +++
 title = "Prometheus"
 date = 2019-07-02T11:59:25+01:00
-weight = 5
+weight = 20
 chapter = true
-pre = "<b>1. </b>"
+pre = "<b>2. </b>"
 +++
 
-### Chapter 1
+### Chapter 2
 
 # Metrics Monitoring with Prometheus
 
