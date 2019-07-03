@@ -49,6 +49,7 @@ spec:
       cpu: 1
       memory: 2Gi
   retention: 12h
+  serviceAccountName: prometheus-service-account
   storage:
     volumeClaimTemplate:
       apiVersion: v1
@@ -62,6 +63,51 @@ spec:
           requests:
             storage: 10Gi
   version: v2.10.0
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: "prometheus-service-account"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "prometheus-cluster-role"
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes/metrics
+  verbs:
+  - get
+- nonResourceURLs:
+  - "/metrics"
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "prometheus-cluster-role-binding"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: "prometheus-cluster-role"
+subjects:
+- kind: ServiceAccount
+  name: "prometheus-service-account"
+  namespace: prometheus
 ```
 
 Now apply this Resource to your Kubernetes cluster using `kubectl apply -f prometheus.yaml`. Kubectl will show that it has successfully created the resource:
@@ -150,6 +196,7 @@ $kubectl get persistentvolumeclaim
 NAME                                     STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 prometheus-pvc-prometheus-prometheus-0   Bound    pvc-c85b2a3b-9d7a-11e9-9e3c-42010a840079   10Gi       RWO            standard       21m
 ```
+The **ServiceAccount**, **ClusterRoleBinding** and **ClusterRoleBinding** are required for providing the Prometheus Pod with the required permissions to access the Kubernetes API as part of its service discovery process.
 
 Lastly lets look at some of the Prometheus specific configuration of the **prometheus.yaml** file:
 
