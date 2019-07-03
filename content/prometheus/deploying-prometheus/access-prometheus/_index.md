@@ -1,5 +1,5 @@
 ---
-title: "Using Prometheus"
+title: "Access Prometheus"
 date: 2019-07-03T12:29:51+01:00
 weight: 30
 draft: false
@@ -13,4 +13,4 @@ Lets port forward our local environment to the Prometheus instance running in Ku
 
 You will now be able to access Prometheus in your web browser at [http://localhost:9090](http://localhost:9090).
 
-![Prometheus](/prometheus/deploying-prometheus/using-prometheus/images/prometheus.png?classes=shadow&width=55pc)
+![Prometheus](/prometheus/deploying-prometheus/access-prometheus/images/prometheus.png?classes=shadow&width=55pc)
