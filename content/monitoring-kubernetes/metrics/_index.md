@@ -13,5 +13,4 @@ In this section we will look at some of the Prometheus Exporters that are availa
 
 * kube-state-metrics
 * Node Exporter
-* Kubelet / Cadvisor
-* Kubernetes API Server
+* Kubelet & Cadvisor
