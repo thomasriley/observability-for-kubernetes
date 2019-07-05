@@ -9,7 +9,7 @@ Out of the box Prometheus does not have any concept of high availability or redu
 
 ## High Availability with Kubernetes
 
-Earlier in this chapter we used the Prometheus Operator to launch a single instance of Prometheus within Kubernetes. To avoid the scenario of losing metrics should a node fail and the metrics no longer being available, either permanently or for a short duration of time, we can run a second instance of Prometheus. Each instance of Prometheus will run independantly and each have the same configuration as set by the Prometheus Operator. Essentially, two copies of target metrics will be scraped, as illustrated below:
+Earlier in this chapter we used the Prometheus Operator to launch a single instance of Prometheus within Kubernetes. To avoid the scenario of losing metrics should a node fail and the metrics no longer being available, either permanently or for a short duration of time, we can run a second instance of Prometheus. Each instance of Prometheus will run independantly and each have the same configuration as set by the Prometheus Operator. Essentially, two copies of target metrics will be scraped, as shown below:
 
 ![Two Prometheus Instances](/prometheus/using-thanos/high-availability/images/multiple-prometheus.png?classes=shadow&width=30pc)
 
@@ -25,13 +25,15 @@ spec:
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
-      - podAffinityTerm:
+      - weight: 100
+        podAffinityTerm:
           labelSelector:
-            matchLabels:
-              app: prometheus
-              prometheus: cluster
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - prometheus
           topologyKey: kubernetes.io/hostname
-        weight: 100
   baseImage: quay.io/prometheus/prometheus
   logLevel: info
   podMetadata:

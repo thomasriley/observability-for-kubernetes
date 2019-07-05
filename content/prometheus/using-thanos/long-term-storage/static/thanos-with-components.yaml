@@ -1,0 +1,296 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thanos-config
+data:
+  thanos.config: dHlwZTogR0NTCmNvbmZpZzoKICBidWNrZXQ6ICJvYnNlcnZhYmlsaXR5LWZvci1rdWJlcm5ldGVzLXRoYW5vcy1kZW1vIgogIHNlcnZpY2VfYWNjb3VudDogfC0KICB7CiAgICAidHlwZSI6ICJzZXJ2aWNlX2FjY291bnQiLAogICAgInByb2plY3RfaWQiOiAia3ViZXJuZXRlcy1jbG91ZC1sYWIiLAogICAgInByaXZhdGVfa2V5X2lkIjogIiIsCiAgICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG5cbi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS1cbiIsCiAgICAiY2xpZW50X2VtYWlsIjogIm9ic2VydmFiaWxpdHktZm9yLWt1YmVybmV0ZXNAa3ViZXJuZXRlcy1jbG91ZC1sYWIuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLAogICAgImNsaWVudF9pZCI6ICIiLAogICAgImF1dGhfdXJpIjogImh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi9hdXRoIiwKICAgICJ0b2tlbl91cmkiOiAiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLAogICAgImF1dGhfcHJvdmlkZXJfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9vYXV0aDIvdjEvY2VydHMiLAogICAgImNsaWVudF94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkvb2JzZXJ2YWJpbGl0eS1mb3Ita3ViZXJuZXRlcyU0MGt1YmVybmV0ZXMtY2xvdWQtbGFiLmlhbS5nc2VydmljZWFjY291bnQuY29tIgogIH0=
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+  namespace: prometheus
+spec:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: prometheus
+              prometheus: cluster
+          topologyKey: kubernetes.io/hostname
+        weight: 100
+  baseImage: quay.io/prometheus/prometheus
+  logLevel: info
+  podMetadata:
+    annotations:
+      cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+    labels:
+      app: prometheus
+      thanos-store-api: "true"
+  replicas: 2
+  thanos:
+    version: v0.4.0
+    resources:
+      limits:
+        cpu: 500m
+        memory: 500Mi
+      requests:
+        cpu: 100m
+        memory: 500Mi
+    objectStorageConfig:
+      key: thanos.config
+      name: thanos-config
+  resources:
+    limits:
+      cpu: 1
+      memory: 2Gi
+    requests:
+      cpu: 1
+      memory: 2Gi
+  retention: 12h
+  serviceAccountName: prometheus-service-account
+  serviceMonitorSelector:
+    matchLabels:
+      serviceMonitorSelector: prometheus
+  externalLabels:
+    cluster_environment: workshop
+  storage:
+    volumeClaimTemplate:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: prometheus-pvc
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+  version: v2.10.0
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: "prometheus-service-account"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "prometheus-cluster-role"
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes/metrics
+  verbs:
+  - get
+- nonResourceURLs:
+  - "/metrics"
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "prometheus-cluster-role-binding"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: "prometheus-cluster-role"
+subjects:
+- kind: ServiceAccount
+  name: "prometheus-service-account"
+  namespace: prometheus
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-query
+  labels:
+    app: thanos-query
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-query
+  template:
+    metadata:
+      labels:
+        app: thanos-query
+    spec:
+      containers:
+      - name: thanos-query
+        image: improbable/thanos:v0.5.0
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 500Mi
+        args:
+        - "query"
+        - "--log.level=debug"
+        - "--query.replica-label=prometheus_replica"
+        - "--store.sd-dns-resolver=miekgdns"
+        - "--store=dnssrv+_grpc._tcp.thanos-store-api.prometheus.svc.cluster.local"
+        ports:
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        - name: cluster
+          containerPort: 10900
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "thanos-store-api"
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: grpc
+    port: 10901
+    targetPort: grpc
+  selector:
+    thanos-store-api: "true"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-store
+  labels:
+    app: thanos-store
+    thanos-store-api: "true"
+spec:
+  replicas: 1
+  serviceName: thanos-store
+  selector:
+    matchLabels:
+      app: thanos-store
+      thanos-store-api: "true"
+  template:
+    metadata:
+      labels:
+        app: thanos-store
+        thanos-store-api: "true"
+    spec:
+      containers:
+      - name: thanos-store
+        image: improbable/thanos:v0.5.0
+        resources:
+          limits:
+            cpu: 1
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        args:
+        - "store"
+        - "--data-dir=/prometheus/cache"
+        - "--objstore.config-file=/config/thanos.config"
+        - "--log.level=info"
+        - "--index-cache-size=256MB"
+        - "--chunk-pool-size=256MB"
+        - "--store.grpc.series-max-concurrency=30"
+        ports:
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        - name: cluster
+          containerPort: 10900
+        volumeMounts:
+        - mountPath: /prometheus
+          name:  thanos-store-storage
+        - mountPath: /config/
+          name: thanos-config
+      volumes:
+      - name: thanos-config
+        secret:
+          secretName: thanos-config
+  volumeClaimTemplates:
+  - metadata:
+      name: thanos-store-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-compact
+  labels:
+    app: thanos-compact
+spec:
+  replicas: 1
+  serviceName: thanos-compact
+  selector:
+    matchLabels:
+      app: thanos-compact
+  template:
+    metadata:
+      labels:
+        app: thanos-compact
+    spec:
+      containers:
+      - name: thanos-compact
+        image: improbable/thanos:v0.5.0
+        resources:
+          limits:
+            cpu: 1
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        args:
+        - "compact"
+        - "--data-dir=/prometheus/compact"
+        - "--objstore.config-file=/config/thanos.config"
+        - "--log.level=info"
+        - "--retention.resolution-raw=2d"
+        - "--retention.resolution-5m=5d"
+        - "--retention.resolution-1h=10d"
+        - "--consistency-delay=15m"
+        - "--wait"
+        ports:
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        - name: cluster
+          containerPort: 10900
+        volumeMounts:
+        - mountPath: /prometheus
+          name: thanos-compact-storage
+        - mountPath: /config/
+          name: thanos-config
+      volumes:
+      - name: thanos-config
+        secret:
+          secretName: thanos-config
+  volumeClaimTemplates:
+  - metadata:
+      name: thanos-compact-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi

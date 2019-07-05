@@ -5,7 +5,8 @@ weight: 20
 draft: false
 ---
 
-## Kubernetes 
+## Kubernetes
+
 These tutorials assume you have access to a Kubernetes environment with full cluster admin privileges and have a basic understand of Kubernetes.
 
 If you need to provision a Kubernetes environment, there are a few options I would suggest:
