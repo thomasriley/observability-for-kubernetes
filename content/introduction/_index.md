@@ -14,10 +14,11 @@ pre = "<b>1. </b>"
 
 * I wanted a place to store all my notes and learnings about Monitoring & Observability working with Kubernetes and containerisation.
 * Instead of maintaining a private set of notes, I created this site so I can give back to the community.
-* If you spot a mistake or wish to propose a change, please raise a [pull request](https://github.com/thomasriley/observability-for-kubernetes) or [contact me](mailto:contact@thomasriley.co.uk)
-* I hope you find this useful!
+* If you spot a mistake please create an [issue](https://github.com/thomasriley/observability-for-kubernetes/issues) or ig wish to propose a change, please raise a [pull request](https://github.com/thomasriley/observability-for-kubernetes/pulls).
+* I hope you find this useful! If you do, please [star](https://github.com/thomasriley/observability-for-kubernetes/stargazers) it and GitHub and share it!
 
 ### Who am I?
 
-* My name is Tom Riley and I am a Cloud & Platform Engineer who is passionate about Monitoring & Observability. 
+* My name is Tom Riley and I am a Cloud & Platform Engineer who is passionate about Monitoring & Observability.
 * Please see my website [thomasriley.co.uk](https://thomasriley.co.uk) to learn more or if you wish to get in touch.
+* You can [contact me](mailto:contact@thomasriley.co.uk) via email.
