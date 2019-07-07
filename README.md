@@ -4,6 +4,8 @@ This is the open source repository for the website [observability.thomasriley.co
 
 This is still a work in progress and I will be improving and adding more content to this website over time.
 
+If you find this website useful please star and share it!
+
 ## Contributing
 
 If you spot a mistake please raise an Issue in this repository or if you would like to make an contribution a Pull Request is welcome!
