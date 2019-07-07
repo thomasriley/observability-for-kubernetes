@@ -7,7 +7,7 @@ draft: false
 
 ## Overview
 
-The Node Exporter is a Prometheus Exporter that owned by the Prometheus project. It is not specific to Kubernetes and is designed to expose hardware and OS metrics from *NIX based Kernels. The project can be found [here](https://github.com/prometheus/node_exporter) on GitHub.
+The Node Exporter is a Prometheus Exporter developed by the Prometheus project. It is not specific to Kubernetes and is designed to expose hardware and OS metrics from *NIX based Kernels. The project can be found [here](https://github.com/prometheus/node_exporter) on GitHub.
 
 We will look at using the Node Exporter to expose metrics for each node running in a Kubernetes cluster.
 
@@ -123,11 +123,11 @@ spec:
       app: node-exporter
 ```
 
-The above YAML will create a DaemonSet that launches the Node Exporter on each node in the Kubernetes cluster. We then create a Kubernetes Service and ServiceMonitor to scrape metrics from all instances of Node Exporter.
+The above YAML will create a DaemonSet that launches the Node Exporter on each node in the Kubernetes cluster. It includes a Kubernetes Service and ServiceMonitor to scrape metrics from all instances of Node Exporter.
 
 Go ahead and install Node Exporter into your Kubernetes cluster by executing `kubectl apply -f node-exporter.yaml`.
 
-You can then use `kubectl get pods --namespace prometheus` to see the **node-exporter** Pod(s) being created by Kubernetes. After a brief moment you can then check the configured Targets in Prometheus and you will see that **kube-state-metrics** is now being successfully scraped.
+You can then use `kubectl get pods --namespace prometheus` to see the **node-exporter** Pod(s) being created by Kubernetes. After a brief moment you can then check the configured Targets in Prometheus and you will see that **node-exporter** is now being successfully scraped.
 
 ## Useful Metrics
 
@@ -170,6 +170,6 @@ time="2019-07-04T15:47:47Z" level=info msg=" - xfs" source="node_exporter.go:104
 time="2019-07-04T15:47:47Z" level=info msg=" - zfs" source="node_exporter.go:104"
 ```
 
-If you refer back to the Node Exporter [documenation](https://github.com/prometheus/node_exporter#collectors) you can see the metric that each of these collectors uses to acquire metrics. For example, the **arp** collector exposes the metrics available in **/proc/net/arp** on Linux.
+If you refer back to the Node Exporter [documenation](https://github.com/prometheus/node_exporter#collectors) you can see the method that each of these collectors uses to acquire metrics. For example, the **arp** collector exposes the metrics available in **/proc/net/arp** on Linux.
 
 In Prometheus, you will see that the majority of metrics exposed by the Node Exporter are prefixed with **node__**. For example, the arp collector described above exposes a metric called **node_arp_entries** that contains the number of ARP entries in the ARP table for each network interface on a node.

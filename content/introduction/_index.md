@@ -12,10 +12,10 @@ pre = "<b>1. </b>"
 
 ### What is this site?
 
-* I wanted a place to store all my notes and learnings about Monitoring & Observability working with Kubernetes and containerisation.
+* I wanted a place to store all my notes and learnings about Monitoring & Observability while working with Kubernetes and containerisation.
 * Instead of maintaining a private set of notes, I created this site so I can give back to the community.
-* If you spot a mistake please create an [issue](https://github.com/thomasriley/observability-for-kubernetes/issues) or ig wish to propose a change, please raise a [pull request](https://github.com/thomasriley/observability-for-kubernetes/pulls).
-* I hope you find this useful! If you do, please [star](https://github.com/thomasriley/observability-for-kubernetes/stargazers) it and GitHub and share it!
+* If you spot a mistake please create an [issue](https://github.com/thomasriley/observability-for-kubernetes/issues) or if wish to propose a change, please raise a [pull request](https://github.com/thomasriley/observability-for-kubernetes/pulls).
+* I hope you find this useful! If you do, please [star](https://github.com/thomasriley/observability-for-kubernetes/stargazers) it on GitHub and share it!
 
 ### Who am I?
 

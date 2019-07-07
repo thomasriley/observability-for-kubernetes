@@ -17,7 +17,7 @@ Lets look at these three options available for deploying Prometheus to Kubernete
 
 #### Prometheus Operator
 
-This is a Kubernetes Operator that provides several Custom Resource Definitions (CRDs) that will allow us to define and configure instances of Prometheus via Kubernetes resources. The Operator contains all the logic for how to best deploy Prometheus.
+This is a Kubernetes Operator that provides several Custom Resource Definitions (CRDs) that will allow us to define and configure instances of Prometheus via Kubernetes resources. The Operator contains all the logic for managing the deployment and automated configuration of Prometheus based on the YAML configuration the user deployments to Kubernetes.
 
 #### kube-prometheus
 

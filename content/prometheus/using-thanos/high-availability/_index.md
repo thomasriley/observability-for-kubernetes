@@ -5,11 +5,11 @@ weight: 10
 draft: false
 ---
 
-Out of the box Prometheus does not have any concept of high availability or redundancy. Prometheus itself may be a mature and reliable product but not everything is foolproof and you should always plan for *when* a Kubernetes worker node fails, not *if* it fails! Before we look at Thanos, lets see how we could tackle this problem with just Kubernetes & Prometheus.
+Out of the box Prometheus does not have any concept of high availability or redundancy. Prometheus itself may be a mature and reliable product but not everything is foolproof and you should always plan for *when* a Kubernetes worker node fails, not *if* it fails, and therefore we must be able to tolerate a Prometheus Pod restarting from time to time. Before we look at Thanos, lets see how we could tackle this problem with just Kubernetes & Prometheus.
 
 ## High Availability with Kubernetes
 
-Earlier in this chapter we used the Prometheus Operator to launch a single instance of Prometheus within Kubernetes. To avoid the scenario of losing metrics should a node fail and the metrics no longer being available, either permanently or for a short duration of time, we can run a second instance of Prometheus. Each instance of Prometheus will run independantly and each have the same configuration as set by the Prometheus Operator. Essentially, two copies of target metrics will be scraped, as shown below:
+Earlier in this chapter we used the Prometheus Operator to launch a single instance of Prometheus within Kubernetes. To avoid the scenario of metrics being unavailable, either permanently or for a short duration of time, we can run a second instance of Prometheus. Each instance of Prometheus will run independent of the other, however each still have the same configuration as set by the Prometheus Operator. Essentially, two copies of target metrics will be scraped, as shown below:
 
 ![Two Prometheus Instances](/prometheus/using-thanos/high-availability/images/multiple-prometheus.png?classes=shadow&width=30pc)
 
@@ -51,6 +51,9 @@ spec:
       memory: 2Gi
   retention: 12h
   serviceAccountName: prometheus-service-account
+  serviceMonitorSelector:
+    matchLabels:
+      serviceMonitorSelector: prometheus
   storage:
     volumeClaimTemplate:
       apiVersion: v1
@@ -69,6 +72,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: "prometheus-service-account"
+  namespace: "prometheus"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -111,23 +115,33 @@ subjects:
   namespace: prometheus
 ```
 
-Lets apply this updated **prometheus.yaml** to Kubernetes by running `kubectl apply -f prometheus.yaml`:
+Lets apply this updated **prometheus.yaml** to Kubernetes by running `kubectl apply -f prometheus.yaml`.
+
+A moment or two after applying this, check the running Pods in the **prometheus** namespace by running `kubectl get pods --namespace prometheus`:
 
 ```shell
-$kubectl apply -f prometheus.yaml
+$kubectl get pods --namespace prometheus
 NAME                                            READY   STATUS    RESTARTS   AGE
 prometheus-operator-operator-86bc4d5568-7k6tp   1/1     Running   0          23h
 prometheus-prometheus-0                         3/3     Running   0          2d
 prometheus-prometheus-1                         3/3     Running   0          1m10s
 ```
 
-Now lets put this to the test! Restart one of the instances of Prometheus by running `kubectl delete pod prometheus-prometheus-0 --namespace prometheus` and then check the Prometheus UI in your web browser, you will see that it is still available!
+Now lets put the reliability of this to the test:
 
-This is great however there is one thing we need to think about. If we have two instances of Prometheus with two copies of of the same metrics, which do we use? Our Prometheus deployment uses a Kubernetes Service and in the previous example we used Kubectl port-forwarding to connect to the Kubernetes Service directly to we are taking advantage of Kubernetes internal load balancing functionality, so we have implemented the illistration below:
+* Reconnect to Prometheus by executing `kubectl port-forward service/prometheus-operated 9090:9090 --namespace prometheus` and then access the UI at [https://localhost:9090](http://localhost:9090)
+* Restart one of the instances of Prometheus by running `kubectl delete pod prometheus-prometheus-0 --namespace prometheus`
+* Immediately then check the Prometheus UI in your web browser, you will see that it is still available!
+
+This is great however there is one thing we need to think about. If we have two instances of Prometheus with two copies of of the same metrics, which should we use?
+
+Your Prometheus deployment uses a Kubernetes Service and in the previous example you used Kubectl port-forwarding, connecting to the Kubernetes Service directly, and therefore taking advantage of Kubernetes internal load balancing functionality. You have essentially  have implemented the illustration below:
 
 ![Two Prometheus Instances with Kubernetes Service](/prometheus/using-thanos/high-availability/images/multiple-prometheus-with-service.png?classes=shadow&width=30pc)
 
-So when we connect to Prometheus via the Kuberneres Service the request will be serviced by one of the running Prometheus instances. However, when we make subsequent requests there is no guratnee that the request will be service by the same instance. Why is this an issue? The two instances of Prometheus that are running are independant of each other and while they do have the same scrape configuration there is no guarantee that they will scrape the targets at exactly the same time therefore the time series metrics that they each collect may have different values. Each time we connect to Prometheus via the load balanced Kubernetes service, we may see some oddness with metrics changing. When visuualsing the metrics over time with dashboarding tools such as Grafana that leads to a really poor experience for users. This is now where Thanos can help!
+So when you connect to Prometheus via the Kuberneres Service the request will be serviced by one of the running Prometheus instances. However, when you make subsequent requests there is no guarantee that the request will be serviced by the same instance. Why is this an issue? The two instances of Prometheus that are running are independent of each other and while they do have the same scrape configuration there is no guarantee that they will scrape the targets at exactly the same time, therefore the time series metrics that they each collect may have different values.
+
+What this all means is, each time you connect to Prometheus via the load balanced Kubernetes Service, you may see some oddness with metrics changing. When visualizing the metrics over time with dashboarding tools such as Grafana, this leads to a really poor experience for users, as each time you reload the same graph it may appear differently in the same time period. This is now where Thanos can help!
 
 ## High Availability with Thanos
 
@@ -135,15 +149,19 @@ At a high level, HA for Prometheus with Thanos works as detailed below:
 
 * First a sidecar is deployed alongside the Prometheus container and interacts with Prometheus. A sidecar is an additional container within the Kubernetes Pod running alongside other containers.
 * Next, an additional service is deployed called Thanos Query and is configured to be aware of of all instances of the Thanos Sidecar.
-* Thanos Query communicates with the Thanos Sidecar via gRPC and deduplicates metrics across all instances of Prometheus when executed. Query exposes users to a Prometheus-esuqe user interfance and also exposes the Prometheus API.
+* Thanos Query communicates with the Thanos Sidecar via [gRPC](https://grpc.io/) and de-duplicates metrics across all instances of Prometheus when executing a query. Query exposes users to a Prometheus-esuqe user interfance and also exposes the Prometheus API.
 
 The diagram below shows this:
 
 ![Two Prometheus Instances with Thanos Sidecar](/prometheus/using-thanos/high-availability/images/multiple-prometheus-with-thanos.png?classes=shadow&width=30pc)
 
-Now lets look at implementing this! The Prometheus Operator allows the configuration of the Thanos Sidecar via the Prometheus CRD, so we simply need to update the existing deployment. We then also need to deploy the Thanos Query service and configure this to federate the instances of Promtheus that are running. We will use a Kubernetes Service as a mechanism of service discovery for configuring Thanos Query to identify the Prometheus instances, to do this we also need to add an additional Kubernetes Pod Label to the Prometheus Pods so we can select them with the label selector on the Kubernetes Service. Lastly, we must also set an external label for the Prometheus instances to use. The external label is required by Thanos and an be used as a method of labelling all metrics that are derived from a particular instance of Thanos Query.
+Now lets look at implementing this!
 
-Update the Promethus resource adding the **thanos** configuration, the new service discovery label, and also configure an external label for the Prometheus instances:
+The Prometheus Operator supports the configuration of the Thanos Sidecar via the Prometheus CRD, so you simply need to update the existing deployment. You then also need to deploy the Thanos Query service and configure this to federate the instances of Prometheus that are running. You will use a Kubernetes Service as a mechanism of service discovery for configuring Thanos Query to identify the Prometheus instances, to do this you also need to add an additional Kubernetes Pod Label to the Prometheus Pods so you can select them with the label selector on the Kubernetes Service.
+
+Finally, you must also set an external label for the Prometheus instances to use. The external label is required by Thanos and is used as a method of labelling all metrics that are derived from a particular instance of Thanos Query.
+
+Update the Prometheus resource adding the **thanos** configuration, the new service discovery label, and also configure an external label for the Prometheus instances:
 
 ```yaml
 spec:
@@ -163,7 +181,7 @@ spec:
     cluster_environment: workshop
 ```
 
-Then define a Kubernetes Deployment for Thanos Query and the Kubernetes Service for the purposes of service discovery:
+Then define a Kubernetes Deployment for Thanos Query and the Kubernetes Service for the purposes of service discovery by adding the below to **prometheus.yaml** also:
 
 ```yaml
 ---
@@ -171,6 +189,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: thanos-query
+  namespace: prometheus
   labels:
     app: thanos-query
 spec:
@@ -211,6 +230,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: "thanos-store-api"
+  namespace: prometheus
 spec:
   type: ClusterIP
   clusterIP: None
@@ -233,17 +253,24 @@ prometheus-operator-operator-86bc4d5568-94cpf   1/1     Running             0   
 prometheus-prometheus-0                         0/4     ContainerCreating   0          1s
 prometheus-prometheus-1                         0/4     Pending             0          1s
 thanos-query-58bcc6dcbb-67rn4                   0/1     ContainerCreating   0          4s
+
+$kubectl get pods --namespace prometheus
+NAME                                            READY   STATUS              RESTARTS   AGE
+prometheus-operator-operator-86bc4d5568-94cpf   1/1     Running             0          19m
+prometheus-prometheus-0                         4/4     Running             0          1m
+prometheus-prometheus-1                         4/4     Running             0          1m
+thanos-query-58bcc6dcbb-67rn4                   1/1     Running             0          1m
 ```
 
-You can see that Pods  **prometheus-prometheus-0** nad **prometheus-prometheus-1** now show **4/4** on the container readiness. Previously this only showed 3 containers, but following this change we now have 4 containers in a Prometheus Pod due to the addtional Thanos Sidecar.
+You can see that Pods  **prometheus-prometheus-0** and **prometheus-prometheus-1** now show **4/4** on the container readiness. Previously this only showed 3 containers, but following this change there are now 4 containers in a Prometheus Pod due to the additional Thanos Sidecar.
 
-Lets now connect to Thanos Query using port forwarding by executing a Kubectl command. You will need to substituate the correct name of your Thanos Query Pod. For example: `kubectl port-forward pod/thanos-query-58bcc6dcbb-67rn4 10902:10902`.
+Now connect to Thanos Query using port forwarding by executing a Kubectl command. You will need to substitute the correct name of your Thanos Query Pod. For example: `kubectl port-forward pod/thanos-query-58bcc6dcbb-67rn4 10902:10902 --namespace prometheus`.
 
 When accessing [http://localhost:10902](http://localhost:10902) in your web browser you will see that the Thanos Query UI is awfully similar to the Prometheus UI. That is no accident, Thanos is actually based on the same codebase as Prometheus.
 
 ![Thanos Query](/prometheus/using-thanos/high-availability/images/thanos-graph.png?classes=shadow&width=30pc)
 
-When running a query in Thanos Query you can see a checkbox called **deduplication**. If you experiment running Prometheus queries with this option enabled and disable you will see how Thanos deduplicates the metrics in the available Prometheus instances when querying.
+When running a Prometheus query in Thanos you can see a checkbox named **deduplication**. If you experiment running Prometheus queries with this option enabled and disable you will see how Thanos deduplicates the metrics in the available Prometheus instances when querying.
 
 If you select the **Stores** option in the menu at the top, Thanos Query has a interface for showing the Thanos Store API endpoints it is currently federating. When you check this, you will see the two Prometheis intances that are running, as shown below:
 
@@ -251,4 +278,4 @@ If you select the **Stores** option in the menu at the top, Thanos Query has a i
 
 ## Conclusion
 
-Success! In this tutorial you have successfully implemented Prometheus running with high availability with Thanos.
+Success! In this tutorial you have successfully implemented Prometheus running with high availability using Thanos.

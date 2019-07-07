@@ -5,9 +5,9 @@ weight: 30
 draft: false
 ---
 
-Now that we have deployed an instance of Prometheus we can look at how to configure it to our needs for monitoring Kubernetes.
+Now that you have deployed an instance of Prometheus, lets look at how to configure it to monitor a service.
 
-In Prometheus if you select **Status > Configuration** or click directly [here](http://localhost:9090/config) you will see that out of the box it only has the configuration below:
+In Prometheus if you select **Status > Configuration** (or click directly [here](http://localhost:9090/config)) you will see that out of the box it only has the configuration below:
 
 ```
 global:

@@ -9,7 +9,7 @@ draft: false
 
 The [Thanos Project](https://github.com/improbable-eng/thanos) turns Prometheus into a highly available metrics platform with unlimited metrics storage.
 
-The three key features of Thanos are as follows:
+The three key features of Thanos, are as follows:
 
 * Global query view of all metrics from as many Prometheus instances as you require.
 * Long term storage of metrics.

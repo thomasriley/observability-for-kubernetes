@@ -1,5 +1,5 @@
 ---
-title: "Kubelet & Cadvisor"
+title: "Kubelet & cAdvisor"
 date: 2019-07-04T17:54:52+01:00
 weight: 30
 draft: false
@@ -11,7 +11,7 @@ Kubelet is a service that runs on each worker node in a Kubernetes cluster and i
 
 ## Deployment
 
-We need not need to deploy a Prometheus Exporter to scrape metrics from Kublet and cAdvisor as they expose a metrics endpoint out the box, therefore we only need to configure our instance of Prometheus to start scraping metrics using a ServiceMonitor.
+We do not need to deploy a Prometheus Exporter to scrape metrics from Kublet and cAdvisor as they expose metrics endpoints out the box, therefore we only need to configure Prometheus to start scraping metrics using a ServiceMonitor.
 
 Create a file called **kubelet.yaml** and add the following:
 
@@ -50,7 +50,7 @@ spec:
       k8s-app: kubelet
 ```
 
-The ServiceMonitor defined in the YAML above will scrape the **/metrics** and **/metrics/cadvisor** endpoints on Kubelet bia the **kubelet** Service in the **kube-system** namespace. It is work noting, the configuration of Kubelet may differ depending your Kubernetes environment. The example above is tested to work on GCP Kubernetes Engine.
+The ServiceMonitor defined in the YAML above will scrape the **/metrics** and **/metrics/cadvisor** endpoints on Kubelet via the **kubelet** Service in the **kube-system** namespace. It is worth noting, the configuration of Kubelet may differ depending your Kubernetes environment. The example above is tested to work on GCP Kubernetes Engine.
 
 Go ahead and install the ServiceMonitor into your Kubernetes cluster by executing `kubectl apply -f kubelet.yaml`.
 

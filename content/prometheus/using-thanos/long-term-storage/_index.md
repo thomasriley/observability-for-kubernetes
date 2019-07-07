@@ -7,23 +7,23 @@ draft: false
 
 ## Long Term Storage 
 
-Now that we have enabled high availability with Prometheus using Thanos we can look at the next killer feature of Thanos, long term storage of metrics!
+Now that you have enabled high availability with Prometheus using Thanos you can look at the next killer feature of Thanos, long term storage of metrics!
 
-To enable this, we first need to create a bucket on an object store such as AWS S3 or GCP Storage. Next we enable the Thanos Sidecar to upload metrics to the object store. Lastly, we need to deploy another Thanos component called Store that acts as an API for the metrics available in the object store and will be queries by the existing Thanos Query instance. The diagram below shows this.
+To enable this, you first need to create a bucket on an object store such as AWS S3 or GCP Storage. Next you enable the Thanos Sidecar to upload metrics to the object store. Lastly, you need to deploy another Thanos component called Store that acts as an API for the metrics available in the object store and will be queried by the existing Thanos Query instance when a user executes a Prometheus query via Thanos Query. The diagram below shows this using a GCP Storage bucket.
 
 ![Thanos With Long Term Storage](/prometheus/using-thanos/long-term-storage/images/long-term-storage.png?classes=shadow&width=40pc)
 
-From the perspective of users they are completely unaware that when they execute a Prometheus query Thanos is querying the for metrics from both the Prometheus instances and from the object storage. 
+From the perspective of users they are completely unaware that when they execute a Prometheus query Thanos is querying the for metrics from both the Prometheus instances and from the object storage.
 
-How does this work? Prometheus stores metrics in **blocks**. Intially, it uses a black in memory but periodically, typically every 2 hours, it writes the current in memory block out to the filesystem. As the Thanos Sidecar in the Prometheus Pod has the same shared filesystem as the Prometheus container it can see the new block that Prometheus writes to the filesystem and once it does the Thanos Sidecar uploads the block to the object storage as per its configuration. This is shown below in the diagram.
+How does this work? Prometheus stores metrics in **blocks**. Initially, it stores a block in memory however periodically, typically every 2 hours, it writes the current in memory block out to the filesystem. As the Thanos Sidecar in the Prometheus Pod has the same shared filesystem as the Prometheus container it can see the new block that Prometheus writes to the filesystem. Once it sees a new block on disk, the Thanos Sidecar uploads the block to the object storage as per its configuration. This is shown below in the diagram.
 
 ![Thanos Sidecar Upload](/prometheus/using-thanos/long-term-storage/images/thanos-sidecar-upload.png?classes=shadow&width=40pc)
 
-Lets now implement this. For this example I created a Google Cloud Storage bucket called **observability-for-kubernetes-thanos-demo** and provisioned a Service Account with 'Storage Admin' permissions so that Thanos can read and write to the storage bucket.
+Lets now implement this. For this example I created a Google Cloud Storage bucket called **observability-for-kubernetes-thanos-demo** and provisioned a Service Account with 'Storage Admin' permissions so that Thanos can read and write to the storage bucket. In the cloud provider of your choice, create a storage bucket and set of credentials with permission to access the bucket.
 
-We now need to create a Thanos Object Store configuration file that provides the bucket configuration and credentials. The structure of this file differs per cloud provider, you can see the [Thanos Documenation](https://github.com/improbable-eng/thanos/blob/master/docs/storage.md) to see the different options but for this example we will proceed using GCP.
+We you need to create a Thanos Object Store configuration file that provides the bucket configuration and credentials to Thanos. The structure of this file differs per cloud provider, you can see the [Thanos Documenation](https://github.com/improbable-eng/thanos/blob/master/docs/storage.md) to see the different options but for this example lets  proceed using Google Cloud Platform.
 
-We will create a Kubernetes Secret that contains the GCP Service Account and Bucket Name. The example below shows the expected structure, however the GCP Service Account is not valid for obvious reasons!
+You will create a Kubernetes Secret that contains the GCP Service Account and Bucket Name. The example below shows the expected structure, however the GCP Service Account is not valid for obvious security reasons!
 
 ```yaml
 type: GCS
@@ -44,7 +44,7 @@ config:
   }
 ```
 
-We should take the valid version of the example above and base64 encode it. You can use `base64` in your terminal for doing this. Then create a file called **thanos-object-secret.yaml** and include the Kubernetes Secret, as shown below:
+You should take the valid version of the example above and base64 encode it. You can use `base64` in your terminal for doing this. Then create a file called **thanos-object-secret.yaml** and include the Kubernetes Secret, as shown below:
 
 ```yaml
 ---
@@ -52,6 +52,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: thanos-config
+  namespace: prometheus
 data:
   thanos.config: dHlwZTogR0NTCmNvbmZpZzoKICBidWNrZXQ6ICJvYnNlcnZhYmlsaXR5LWZvci1rdWJlcm5ldGVzLXRoYW5vcy1kZW1vIgogIHNlcnZpY2VfYWNjb3VudDogfC0KICB7CiAgICAidHlwZSI6ICJzZXJ2aWNlX2FjY291bnQiLAogICAgInByb2plY3RfaWQiOiAia3ViZXJuZXRlcy1jbG91ZC1sYWIiLAogICAgInByaXZhdGVfa2V5X2lkIjogIiIsCiAgICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG5cbi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS1cbiIsCiAgICAiY2xpZW50X2VtYWlsIjogIm9ic2VydmFiaWxpdHktZm9yLWt1YmVybmV0ZXNAa3ViZXJuZXRlcy1jbG91ZC1sYWIuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLAogICAgImNsaWVudF9pZCI6ICIiLAogICAgImF1dGhfdXJpIjogImh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi9hdXRoIiwKICAgICJ0b2tlbl91cmkiOiAiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLAogICAgImF1dGhfcHJvdmlkZXJfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9vYXV0aDIvdjEvY2VydHMiLAogICAgImNsaWVudF94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkvb2JzZXJ2YWJpbGl0eS1mb3Ita3ViZXJuZXRlcyU0MGt1YmVybmV0ZXMtY2xvdWQtbGFiLmlhbS5nc2VydmljZWFjY291bnQuY29tIgogIH0=
 ```
@@ -65,7 +66,7 @@ $kubectl apply -f thanos-object-secret.yaml
 secret/cluster-thanos-config created
 ```
 
-With the object store configuration deployed to Kubernetes, next update the Prometheus resource adding the **objectStorageConfig** key so that the Prometheus Operator configures the Thanos Sidecare with the object storage config that has just been deployed to Kubernetes.
+With the object store configuration deployed to Kubernetes, next update the Prometheus resource adding the **objectStorageConfig** key so that the Prometheus Operator configures the Thanos Sidecar with the object storage config that has just been deployed to Kubernetes.
 
 The Prometheus resource should look similar to the below with this added:
 
@@ -139,14 +140,14 @@ spec:
   version: v2.10.0
 ```
 
-Edit the **prometheus.yaml** file we created previously to reflect the changes above. Under the **objectStorageConfig** key set the **name** to be the name of the Kubernetes Secret we just created and the **key** to be the name of the secret key we used, which in this case is **thanos.config**.
+Edit the **prometheus.yaml** file you created previously to reflect the changes above. Under the **objectStorageConfig** key set the **name** to be the name of the Kubernetes Secret you just created and the **key** to be the name of the secret key you used, which in this case is **thanos.config**.
 
 Apply the updated **prometheus.yaml** to Kubernetes by running `kubectl apply -f prometheus.yaml`. To see an example of the full YAML file that reflects the changes described above see [here](/prometheus/using-thanos/long-term-storage/static/thanos-with-object-config.yaml).
 
 Once the Prometheus Pods have restarted with the new configuration, use `kubectl logs` to view the logs from the **thanos-sidecar** container in one of the Prometheus Pods, as shown below:
 
 ```shell
-$kubectl logs prometheus-prometheus-0 thanos-sidecar
+$kubectl logs prometheus-prometheus-0 thanos-sidecar --namespace prometheus
 level=info ts=2019-07-05T20:48:04.403642465Z caller=flags.go:87 msg="gossip is disabled"
 level=info ts=2019-07-05T20:48:04.403893193Z caller=main.go:257 component=sidecar msg="disabled TLS, key and cert must be set to enable"
 level=info ts=2019-07-05T20:48:04.403923795Z caller=factory.go:39 msg="loading bucket configuration"
@@ -178,6 +179,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: thanos-store
+  namespace: prometheus
   labels:
     app: thanos-store
     thanos-store-api: "true"
@@ -240,19 +242,23 @@ spec:
 
 Apply this to Kubernetes by running `kubectl apply -f prometheus.yaml`.
 
-Kubernetes will launch a single Thanos Store pod as per the configuration above. If you check the available **Stores** in the Thanos Query UI, you will now see Thanos Store listed in addition to the two Thanos Sidecars running alongside Prometheus. Now when querying via Thanos Query, the query will execute across both the Prometheus instances and also the metrics stored in the object store!
+Kubernetes will launch a single Thanos Store Pod as per the configuration above. If you check the available **Stores** in the Thanos Query UI, you will now see Thanos Store listed in addition to the two Thanos Sidecars running alongside Prometheus. Now when querying via Thanos Query, the query will execute across both the Prometheus instances and also the metrics stored in the object store!
 
 ![Thanos Query Stores](/prometheus/using-thanos/long-term-storage/images/thanos-query-with-store.png?classes=shadow&width=40pc)
 
 ### Thanos Compact
 
-Thanos Compact is the final Thanos component we need to deploy. Compact performs three main tasks:
+Thanos Compact is the final Thanos component you need to deploy. 
 
-* It executes a Prometheus compaction job on the blocks in the object store. Typically Prometheus would execute this on blocks locally on the filesystem but the process is disabled by Prometheus Operator when using Thanos.
-* It also executes a downsampling process on metrics in the object store. Prometheus stores metrics with a resolution of 1 minute. However, if you were to execute a query over a period of months or years on a Prometheus environment using Thanos for long term storage, the number of datapoints returned would be excessive! Therefore, Compact performs the downsampling job adding a 5 minute and 1 hour sample in addition to the 1 minute sample by creating a new block and discarding the original once downsampling is completed. When executing queries, Thanos will automatically select the most appropriate sample to use.
+Compact performs three main tasks:
+
+* It executes a Prometheus compaction job on the blocks in the object store. Typically Prometheus would execute this for blocks locally on the filesystem but the process is disabled by Prometheus Operator when using Thanos.
+* It also executes a down-sampling process on metrics in the object store. Prometheus stores metrics with a resolution of 1 minute. However, if you were to execute a query over a period of months or years on a Prometheus environment using Thanos with long term storage, the number of data-points returned would be excessive! Therefore, Compact performs the down-sampling job adding a 5 minute and 1 hour sample in addition to the 1 minute sample. It does this by creating a new block and discarding the original once down-sampling is completed. When executing queries, Thanos will automatically select the most appropriate sample to return.
 * Lastly, it is also possible to set retention periods for the 1 minute, 5 minute and 1 hour samples. Compact will apply these retentions if they are set.
 
-Now lets deploy Thanos Compact. Update **prometheus.yaml** to also include the following:
+Now lets deploy Thanos Compact. 
+
+Update **prometheus.yaml** to also include the following:
 
 ```yaml
 ---
@@ -260,6 +266,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: thanos-compact
+  namespace: prometheus
   labels:
     app: thanos-compact
 spec:

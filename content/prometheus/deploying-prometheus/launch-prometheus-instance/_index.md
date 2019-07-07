@@ -9,7 +9,7 @@ draft: false
 
 Now that we have deployed Prometheus Operator we can use it to launch an instance of Prometheus.
 
-When we deployed the Operator one of the tasks it performed when it first launched was to is install a number Custom Resource Definitions into Kubernetes. Out of the box, Kubernetes ships with many powerful resources such as the Deployment or Statefulset. CRDs ways of building completely bespoke Resources that provide logic to a specific funtion. In this case, the CRDs installed by Prometheus Operator provide a means for launching and configuring Prometheus within Kubernetes.
+When we deployed the Operator, one of the tasks it performed when it first launched was to is install a number Custom Resource Definitions (CRDs) into Kubernetes. Out of the box, Kubernetes ships with many powerful Controllers such as the Deployment or Statefulset. CRDs provide a method of building completely bespoke Controllers that provide logic to a specific function. In this case, the CRDs installed by Prometheus Operator provide a means for launching and configuring Prometheus within Kubernetes.
 
 If you run the `kubectl get customresourcedefinitions` command in your terminal you will see four CRDs provided by the Operator:
 
@@ -68,6 +68,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: "prometheus-service-account"
+  namespace: "prometheus"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -110,11 +111,14 @@ subjects:
   namespace: prometheus
 ```
 
-Now apply this Resource to your Kubernetes cluster using `kubectl apply -f prometheus.yaml`. Kubectl will show that it has successfully created the resource:
+Now apply this YAML to your Kubernetes cluster using `kubectl apply -f prometheus.yaml`. Kubectl will show that it has successfully created the configuration, as shown below:
 
 ```shell
 $kubectl apply -f prometheus.yaml
 prometheus.monitoring.coreos.com/prometheus created
+serviceaccount/prometheus-service-account created
+clusterrole.rbac.authorization.k8s.io/prometheus-cluster-role created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-cluster-role-binding created
 ```
 
 Success! If you now list Pods in the **prometheus** namespace using `kubectl get pods --namespace prometheus` you will see an instance of Prometheus running alongside the Prometheus Operator:
@@ -126,19 +130,19 @@ prometheus-operator-operator-86bc4d5568-shs69   1/1     Running   0          10m
 prometheus-prometheus-0                         3/3     Running   0          1m
 ```
 
-If we check for the custom Prometheus Resource that we installed into the cluster using `kubectl get prometheus` we will see the single **prometheus** instance that we named:
+If you now check for the custom Prometheus resource that you have just installed into the cluster using `kubectl get prometheus --namespace prometheus` you will see the single result named **prometheus**:
 
 ```shell
-$kubectl get prometheus
+$kubectl get prometheus --namespace prometheus
 NAME         AGE
 prometheus   6m
 ```
 
-The Prometheus Operator acts as a controller for the Custom Resources. When we deployed the **Prometheus** resource the Operator reacted by created the Prometheus instance we just indentified by listing Pods in the **prometheus** namespace.
+The Prometheus Operator acts as a Controller for the Custom Resources. When you deployed the **Prometheus** resource the Operator created the Prometheus instance, that you just identified when getting a list Pods in the **prometheus** namespace.
 
 ### What does this mean?
 
-Lets now take a look at the **prometheus.yaml** file we applied to Kubernetes and see what each section does.
+Lets now take a look at the **prometheus.yaml** file we applied to Kubernetes and see what each section means.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -148,7 +152,7 @@ metadata:
   namespace: prometheus
 ```
 
-Here we define that we are doing to deploy a resource called **prometheus** that is of the type **Prometheus** as defined by the Kind and that this Kind is part of the API Version **monitoring.coreos.com/v1** that was previously installed into Kubernetes by the Prometheus Operator as a Custom Resource Definition. This object will be created in the **prometheus** namespace.
+Here we define that we wish to create an object called **prometheus** that is of the type **Prometheus** as defined by the Kind and that this Kind is part of the API Version **monitoring.coreos.com/v1**, that was previously installed into Kubernetes by the Prometheus Operator as a Custom Resource Definition. This object will be created in the **prometheus** namespace.
 
 Everything then under the **spec** of the YAML file defines what the instance of Prometheus should look like.
 
@@ -187,12 +191,12 @@ Setting the **baseImage** defines the actual Prometheus Docker image to be used.
             storage: 10Gi
 ```
 
-This block defines the storage that will be used by Prometheus. By default the Operator will create Prometheus Pods that use local storage only by using an [emptyDir](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir). If you wish to retain the state of Prometheus and therefore the metrics that it stores when re-launching Prometheus, such as during a version upgrade, then you need to use persistent storage. The `PersistentVolumeClaim` defines the specification of the storage to be used by Prometheus. In this example we are create a persistent disk that is 10Gi for each instance of Prometheus that is created.
+This block defines the storage that will be used by Prometheus. By default the Operator will create Prometheus Pods that use local storage only by using an [emptyDir](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir). If you wish to retain the state of Prometheus and therefore the metrics that it stores when re-launching Prometheus, such as during a version upgrade, then you need to use persistent storage. The **PersistentVolumeClaim (PVC)** defines the specification of the storage to be used by Prometheus. In this example we are creating a persistent disk that is 10Gi for each instance of Prometheus that is created.
 
-In your terminal if you execute `kubectl get persistentvolumeclaim` you will see the PVC that has been created and Bound to a Persistent Volume for the single instance of Prometheus that we have created:
+In your terminal if you execute `kubectl get persistentvolumeclaim --namespace prometheus` you will see the PVC that has been created and Bound to a Persistent Volume for the single instance of Prometheus that you have created:
 
 ```shell
-$kubectl get persistentvolumeclaim
+$kubectl get persistentvolumeclaim --namespace prometheus
 NAME                                     STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 prometheus-pvc-prometheus-prometheus-0   Bound    pvc-c85b2a3b-9d7a-11e9-9e3c-42010a840079   10Gi       RWO            standard       21m
 ```

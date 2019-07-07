@@ -5,11 +5,13 @@ weight: 10
 draft: false
 ---
 
-The Prometheus Operator includes a Custom Resource Definition that allows the definition of the ServiceMonitor. The ServiceMonitor is used to define a an application you wish to scrape metrics from within Kubernetes, the controller will action the ServiceMonitors we define and automatically build the required Prometheus configuration.
+Prometheus uses a pull based model for collecting metrics from applications and services. This means the applications and services must expose a HTTP(S) endpoint containing Prometheus formatted metrics. Prometheus will then, as per its configuration, periodically scrape metrics from these HTTP(S) endpoints.
 
-Within the ServiceMonitor we specify the Labels that the Operator can use to identify the Kubernetes Service that identifies the Pods we wish to monitor. Lets look at how we can use Prometheus to scrape metrics from its own metrics endpoint.
+The Prometheus Operator includes a Custom Resource Definition that allows the definition of the ServiceMonitor. The ServiceMonitor is used to define an application you wish to scrape metrics from within Kubernetes, the controller will action the ServiceMonitors we define and automatically build the required Prometheus configuration.
 
-Using **kubectl describe** we can view the Labels on the **prometheus-operated** service that the Prometheus Operator previously created:
+Within the ServiceMonitor we specify the Kubernetes Labels that the Operator can use to identify the Kubernetes Service which in turn then identifies the Pods, that we wish to monitor. Lets look at how we can use Prometheus to scrape metrics from its own inbuilt metrics endpoint.
+
+Using **kubectl describe**, we can view the Labels on the **prometheus-operated** service that the Prometheus Operator previously created. If you wish to see this execute `kubectl describe service prometheus-operated --namespace prometheus` in your terminal or see the example below:
 
 ```shell
 $kubectl describe service prometheus-operated --namespace prometheus
@@ -49,11 +51,11 @@ spec:
       operated-prometheus: "true"
 ```
 
-This Kubernetes Resource usess the **monitoring.coreos.com/v1** API Version that was installed into Kubernetes by the Prometheus Operator, as explained previously. It uses the **namespaceSelector** to specify the Kubernetes Service we wish to select is located in the **prometheus** namespace. It then uses the **selector** to specify that it must match the Label **operated-prometheus** being set as **true**.
+This Kubernetes Resource uses the **monitoring.coreos.com/v1** API Version that was installed into Kubernetes by the Prometheus Operator, as explained previously. It uses the **namespaceSelector** to specify the Kubernetes Namespace in which we wish to locate the Service, in this example above we are selecting within the **prometheus** namespace. It then uses the **selector** to specify that it must match the Label **operated-prometheus** being set as **"true"**.
 
 Under the **endpoints** key we must specify one or more scrape targets for the target service. In this example it will scrape each Pod it selects on TCP port **9090** on the URL **/metrics** every **30 seconds**.
 
-Now apply this YAML to the cluster by executing `kubectl apply -f servicemonitor.yaml`. You can then validate this has been created by execute `kubectl get servicemonitor`:
+Now apply this YAML to the cluster by executing `kubectl apply -f servicemonitor.yaml`. You can then validate this has been created by execute `kubectl get servicemonitor --namespace prometheus`:
 
 ```shell
 $kubectl get servicemonitor
@@ -61,7 +63,7 @@ NAME                           AGE
 prometheus                     1m
 ```
 
-Before Prometheus Operator will automatically update our Prometheus Configuration to set it to scrape metrics from itself, there is one more thing we must do. On the **ServiceMonitor** we defined a label on the resource called **serviceMonitorSelector**, as shown below:
+Before Prometheus Operator will automatically update the running Prometheus instance configuration to set it to scrape metrics from itself, there is one more thing we must do. On the **ServiceMonitor** we defined a label on the resource called **serviceMonitorSelector**, as shown below:
 
 ```yaml
 metadata:
@@ -69,9 +71,9 @@ metadata:
     serviceMonitorSelector: prometheus
 ```
 
-We must update our Prometheus Resource configuration to instruct the Prometheus Operator to configure our Prometheus instance using all **ServiceMonitors** that have the **serviceMonitorSelector** Label set as **prometheus**.
+You now need to update the Prometheus Resource configuration to instruct the Prometheus Operator to configure the Prometheus instance using all **ServiceMonitors** that have the **serviceMonitorSelector** Label set as **prometheus**.
 
-Update the previous YAML file we created called **prometheus.yaml** and add the **serviceMonitorSelector** key to the Prometheus resource:
+Update the previous YAML file you created called **prometheus.yaml** and add the **serviceMonitorSelector** key to the Prometheus resource:
 
 ```yaml
   serviceMonitorSelector:
@@ -125,14 +127,14 @@ spec:
 
 Now apply this change to the Kubernetes cluster by running `kubectl apply -f prometheus.yaml`.
 
-After a few moment the Prometheus Operator will automatically update the Prometheus instance we created with the Target configuration to scrape the Prometheus metrics endpoint on the Pod. After a minute or two, check the [Prometheus Configuration](http://localhost:9090/config) again, you will see the scrape config appear under the **scrape_configs** key.
+After a few moment the Prometheus Operator will automatically update the Prometheus instance you created with the Target configuration to scrape the Prometheus metrics endpoint on the Pod. After a minute or two, check the [Prometheus Configuration](http://localhost:9090/config) again, you will see the scrape config appear under the **scrape_configs** key.
 
-In the Prometheus UI if you select **Status > Targets** or go [here](http://localhost:9090/targets) you will bee details of the target Prometheus has identified, which is the single instance of Prometheus we launched:
+In the Prometheus UI if you select **Status > Targets** (or go [here](http://localhost:9090/targets)) you will see details of the target Prometheus has identified, which is the single instance of Prometheus you launched:
 
 ![Prometheus Targets](/prometheus/configuring-prometheus/using-service-monitors/images/targets.png?classes=shadow&width=55pc)
 
-If you now select the **Graph** UI the **Expression** search box will now auto-complete when you start typing. Go ahead and type 'prometheus' and you will see some metric names appear. If you select one and click **Execute** it will query for that metrics. Here is an example for **prometheus_build_info**:
+If you now select **Graph** at the top, the **Expression** search box will now auto-complete when you start typing. Go ahead and type 'prometheus' and you will see some metric names appear. If you select one and click **Execute** it will query for that metric. Here is an example for **prometheus_build_info**:
 
 ![Prometheus Graph](/prometheus/configuring-prometheus/using-service-monitors/images/graph.png?classes=shadow&width=55pc)
 
-We have now successfully configured Prometheus using the ServiceMonitor. Going forward when adding more services to Kubernetes that require Promtheus monitoring, the ServiceMonitor can be used to configure Prometheus as has been demonstrated.
+You have now successfully configured Prometheus using the ServiceMonitor. Going forward when adding more services to Kubernetes that require Prometheus monitoring, the ServiceMonitor can be used to configure Prometheus as has been demonstrated.
