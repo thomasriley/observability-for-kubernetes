@@ -8,4 +8,4 @@ If you find this website useful please star and share it!
 
 ## Contributing
 
-If you spot a mistake please raise an Issue in this repository or if you would like to make an contribution a Pull Request is welcome!
+If you spot a mistake please raise an Issue in this repository or if you would like to make a contribution a Pull Request is welcome!
