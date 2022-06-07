@@ -9,7 +9,7 @@ There are a number of ways you can deploy Prometheus to Kubernetes:
 
 * [Prometheus Operator](https://github.com/coreos/prometheus-operator.git)
 * [kube-prometheus](https://github.com/coreos/kube-prometheus)
-* [Community Helm Chart](https://github.com/helm/charts/tree/master/stable/prometheus)
+* [Community Helm Chart](https://github.com/prometheus-community/helm-charts)
 
 ### Three Options
 
