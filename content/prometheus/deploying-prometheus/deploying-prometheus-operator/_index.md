@@ -5,7 +5,7 @@ weight: 10
 draft: false
 ---
 
-First we will use the community maintained [Helm chart](https://github.com/helm/charts/tree/master/stable/prometheus-operator) for deploying Prometheus Operator to Kubernetes. By default, the Helm chart will also deploy and configure an instance of Prometheus however to begin with lets deploy a standalone instance of the Operator.
+First we will use the community maintained [Helm chart](https://github.com/prometheus-community/helm-charts) for deploying Prometheus Operator to Kubernetes. By default, the Helm chart will also deploy and configure an instance of Prometheus however to begin with lets deploy a standalone instance of the Operator.
 
 Lets modify the default behavior of the Helm chart. Create a file called **values.yaml** containing the following:
 
