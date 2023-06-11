@@ -50,6 +50,13 @@ spec:
       memory: 2Gi
   retention: 12h
   serviceAccountName: prometheus-service-account
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
   storage:
     volumeClaimTemplate:
       apiVersion: v1
