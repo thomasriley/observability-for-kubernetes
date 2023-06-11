@@ -69,7 +69,7 @@ spec:
         resources:
           requests:
             storage: 10Gi
-  version: v2.10.0
+  version: v2.44.0
 ---
 apiVersion: v1
 kind: ServiceAccount
