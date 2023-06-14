@@ -110,6 +110,13 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       serviceMonitorSelector: prometheus
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
   storage:
     volumeClaimTemplate:
       apiVersion: v1
@@ -122,7 +129,7 @@ spec:
         resources:
           requests:
             storage: 10Gi
-  version: v2.10.0
+  version: v2.44.0
 ```
 
 Now apply this change to the Kubernetes cluster by running `kubectl apply -f prometheus.yaml`.

@@ -125,6 +125,13 @@ spec:
       serviceMonitorSelector: prometheus
   externalLabels:
     cluster_environment: workshop
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
   storage:
     volumeClaimTemplate:
       apiVersion: v1
@@ -137,7 +144,7 @@ spec:
         resources:
           requests:
             storage: 10Gi
-  version: v2.10.0
+  version: v2.44.0
 ```
 
 Edit the **prometheus.yaml** file you created previously to reflect the changes above. Under the **objectStorageConfig** key set the **name** to be the name of the Kubernetes Secret you just created and the **key** to be the name of the secret key you used, which in this case is **thanos.config**.

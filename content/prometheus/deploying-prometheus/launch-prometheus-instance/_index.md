@@ -178,7 +178,7 @@ Here we define the Resource limits (CPU & Memory) that each Prometheus Pod will 
 
 ```yaml
   baseImage: quay.io/prometheus/prometheus
-  version: v2.10.0
+  version: v2.44.0
 ```
 
 Setting the **baseImage** defines the actual Prometheus Docker image to be used. This will actually be defaulted to the Docker image that is released by the Prometheus project however we included it as an example. The **version** field sets the version of Prometheus you wish to use. You can see available versions on the [GitHub project](https://github.com/prometheus/prometheus/releases).
