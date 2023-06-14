@@ -54,6 +54,13 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       serviceMonitorSelector: prometheus
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
   storage:
     volumeClaimTemplate:
       apiVersion: v1
@@ -66,7 +73,7 @@ spec:
         resources:
           requests:
             storage: 10Gi
-  version: v2.10.0
+  version: v2.44.0
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -204,7 +211,7 @@ spec:
     spec:
       containers:
       - name: thanos-query
-        image: improbable/thanos:v0.5.0
+        image: quay.io/thanos/thanos:v0.29.0
         resources:
           limits:
             cpu: 500m
